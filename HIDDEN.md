@@ -29,7 +29,6 @@ Still routed at `/actors/learn/*`, unreachable from the nav:
 
 | Product | Why |
 | --- | --- |
-| Agents (`/agents/docs`) | **Temporary, until Agents launches.** Built and routed, but `unlaunched: true` in `product-metadata.ts` drops it from every listing: the homepage "there's an Actor for it" plates (the Actors primitive stands in its slot wearing the Agents blue — see `HOMEPAGE_ACTOR_PLATES` in `src/data/actor-types.ts`), the docs tab strip, the Documentation menu, the footer, the registry, and the `/docs/` card grid (commented out in `src/content/docs/docs/index.mdx`). To restore: delete `unlaunched`, delete the stand-in, uncomment the card |
 | Rivet Cloud | Managed platform, not one of the four pillars. It has no product vertical: its bundle renders inside the Deploy section (`/orchestrate/deploy/{cloud,byoc}/`) and its marketing page is `/pricing/`. `hidden: true` keeps it out of the switcher |
 | Secure Exec (`/secure-exec`) | The isolate runtime underneath agentOS, moved here from secureexec.dev. A library, not one of the four pillars. `hidden: true` keeps it out of the switcher and the `/docs` index; it is reachable from the footer. Its Overview keeps secureexec.dev's own dark design on purpose, scoped under `.secure-exec-page`, with the header and footer forced dark for that page only (`darkChrome`) |
 
