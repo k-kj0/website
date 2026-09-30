@@ -1,0 +1,72 @@
+---
+// The agentOS Registry, built from the `registry` collection: an overview with
+// every entry as a card, grouped, and a page per group with each entry inline
+// as a section.
+import { getCollection } from 'astro:content';
+import DocsArticleLayout from '@/components/docs/DocsArticleLayout.astro';
+import RegistryEntrySection from '@/components/docs/RegistryEntrySection.astro';
+import { RegistryCards } from '@/components/docs/RegistryCards';
+import { Heading } from '@/components/Heading';
+import { AGENTOS_REGISTRY_CATEGORIES, type RegistryCategory } from '@/data/registry-categories';
+import { registryCategorySlug } from '@/sitemap/registry';
+import { getRouteSeoPolicy, robotsDirective } from '@/lib/routeSeoPolicy';
+
+const PRODUCT_ID = 'agentos';
+
+export async function getStaticPaths() {
+	return [
+		{ params: { slug: undefined }, props: { category: undefined } },
+		...AGENTOS_REGISTRY_CATEGORIES.map((category) => ({
+			params: { slug: registryCategorySlug(category) },
+			props: { category },
+		})),
+	];
+}
+
+const { category } = Astro.props as { category?: RegistryCategory };
+const docs = (await getCollection('registry')).map((entry) => entry.data);
+const docsIn = (type: string) => docs.filter((doc) => doc.groups.includes(type));
+const robots = robotsDirective(getRouteSeoPolicy(Astro.url));
+
+const page = category
+	? {
+			title: category.label,
+			description: category.description,
+			seoTitle: `${category.label} - agentOS Registry`,
+			slugPath: `registry/${registryCategorySlug(category)}`,
+			headings: docsIn(category.type).map((doc) => ({ depth: 2, slug: doc.slug, text: doc.title })),
+		}
+	: {
+			title: 'Registry',
+			description: 'File systems, browsers, sandbox mounting, software packages, and bindings for agentOS.',
+			seoDescription:
+				'Browse file systems, browsers, sandbox mounting integrations, software packages, and bindings for durable agentOS environments.',
+			slugPath: 'registry',
+			headings: AGENTOS_REGISTRY_CATEGORIES.map((group) => ({
+				depth: 2,
+				slug: registryCategorySlug(group),
+				text: group.label,
+			})),
+		};
+---
+
+<DocsArticleLayout
+	{...page}
+	routePrefix={`/${PRODUCT_ID}/docs`}
+	breadcrumbName="agentOS Documentation"
+	productId={PRODUCT_ID}
+	tabId="docs"
+	seoContextLabel="agentOS Registry"
+	editUrl="https://github.com/rivet-dev/website/edit/main/src/data/registry.ts"
+	robots={robots}
+>
+	{category
+		? docsIn(category.type).map((doc) => <RegistryEntrySection doc={doc} />)
+		: AGENTOS_REGISTRY_CATEGORIES.map((group) => (
+				<section>
+					<Heading level={2} id={registryCategorySlug(group)}>{group.label}</Heading>
+					<p>{group.description}</p>
+					<RegistryCards productId={PRODUCT_ID} category={group} docs={docsIn(group.type)} />
+				</section>
+			))}
+</DocsArticleLayout>

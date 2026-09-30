@@ -2,8 +2,9 @@
  * The Integrations section (`/integrations/`): third-party frameworks and SDKs
  * backed by Rivet Actors. Its pages are authored in the Actors bundle under
  * `actors/integrations/<slug>` and re-rooted here, the same way the bundle's
- * `learn` section renders as `/guides/`. Standalone subsites (agentOS) keep
- * their own `/<product>/integrations/` tab.
+ * `learn` section renders as `/guides/`. Any other product (agentOS) renders
+ * its integrations inside its Documentation tab at
+ * `/<product>/docs/integrations/`, reached from a fold in the docs sidebar.
  *
  * Rendered by `src/pages/integrations/[...slug].astro`.
  */
@@ -27,14 +28,35 @@ export const SITE_INTEGRATIONS_CONTENT_PREFIX = `${SITE_INTEGRATIONS_BUNDLE}/doc
 
 /**
  * Href of a product's integrations page. The site product's pages sit at the
- * root; any other product keeps them under its own vertical.
+ * root; any other product keeps them inside its own docs.
  */
 export function integrationsHref(productId: string, slug = ""): string {
 	const base =
 		productId === SITE_INTEGRATIONS_PRODUCT
 			? INTEGRATIONS_ROUTE_PREFIX
-			: `/${productId}/integrations`;
+			: `/${productId}/docs/${PRODUCT_INTEGRATIONS_SEGMENT}`;
 	return slug ? `${base}/${slug}/` : `${base}/`;
+}
+
+/**
+ * Path segment of a non-site product's integrations, both in its bundle
+ * (`<product>/integrations/**`) and under its docs route
+ * (`/<product>/docs/integrations/**`).
+ */
+export const PRODUCT_INTEGRATIONS_SEGMENT = "integrations";
+
+/**
+ * Site slug (no leading slash) of a non-site product's integrations content
+ * id, e.g. `agentos/integrations/flue` -> `agentos/docs/integrations/flue`.
+ * Undefined for any other id, including the site product's.
+ */
+export function productIntegrationsSlugForContentId(
+	contentId: string,
+): string | undefined {
+	const [productId, segment, ...rest] = contentId.split("/");
+	if (!productId || segment !== PRODUCT_INTEGRATIONS_SEGMENT) return undefined;
+	if (productId === SITE_INTEGRATIONS_PRODUCT) return undefined;
+	return [productId, "docs", PRODUCT_INTEGRATIONS_SEGMENT, ...rest].join("/");
 }
 
 /**

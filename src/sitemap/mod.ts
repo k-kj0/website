@@ -22,7 +22,7 @@ export * from "./products";
 export const sitemap = [
 	...products.flatMap((product) =>
 		product.tabs
-			// A tab that links out (Sandboxes' Documentation -> /agentos/docs/)
+			// A tab that links out (`docsHome`)
 			// owns no pages; the target product's own tab resolves them.
 			.filter((tab) => tab.href.startsWith(`/${product.id}/`))
 			.map((tab) => ({

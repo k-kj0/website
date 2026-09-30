@@ -35,10 +35,13 @@ export interface ProductMetadata {
 	color: string;
 	contrast: number;
 	/**
-	 * Tabs beyond the ones every product has (Use Cases, Documentation). A
-	 * product without the content for one simply does not show the tab. Guides
-	 * and Deploy are site-wide sections (`/guides/`, `/docs/deploy/`), not
-	 * product tabs.
+	 * Sections beyond the ones every product has (Use Cases, Documentation). A
+	 * product without the content for one simply does not show it. The site
+	 * product's Integrations (`actors`) is a tab linking to `/integrations/`;
+	 * any other product's Integrations is a fold in its docs sidebar at
+	 * `/<product>/docs/integrations/`, and its Registry is a button at the top
+	 * of that sidebar linking to `/<product>/docs/registry/`. Guides and Deploy
+	 * are site-wide sections (`/guides/`, `/docs/deploy/`), not product tabs.
 	 */
 	optionalTabs: ("integrations" | "registry")[];
 	/**
@@ -77,8 +80,8 @@ export interface ProductMetadata {
 	/**
 	 * A subsite with its own marketing page and its own second header row
 	 * (Overview plus the product's tabs), rather than the shared docs tab strip.
-	 * agentOS and Secure Exec are documented as products in their own right, so
-	 * they are not folded into the orchestration docs.
+	 * Secure Exec is documented as a library in its own right, so it is not
+	 * folded into the orchestration docs.
 	 */
 	standalone?: true;
 	/**
@@ -106,14 +109,13 @@ export interface ProductMetadata {
 	bundlePath?: string;
 	/**
 	 * Id of the product whose docs bundle this one renders, re-rooted under its
-	 * own routes (planned: Sandboxes serving the agentOS bundle at
-	 * `/sandboxes/docs/`). The content, sidebar, and edit links all come from
+	 * own routes. The content, sidebar, and edit links all come from
 	 * that product's source, so `repo` must name the same repository.
 	 */
 	bundleOf?: string;
 	/**
 	 * Where the Documentation tab points when this product's docs are served
-	 * under another product (Sandboxes -> `/agentos/docs/`). The tab then owns
+	 * under another product. The tab then owns
 	 * no sidebar and generates no routes of its own.
 	 */
 	docsHome?: string;
@@ -159,24 +161,6 @@ export const PRODUCTS: ProductMetadata[] = [
 		unlaunched: true,
 	},
 	{
-		// Sandboxes are agentOS as an API: the actor type that hosts it. They
-		// share its mark and accent. Their docs are the agentOS docs for now, so
-		// the Documentation tab lands there and this product routes nothing.
-		// TEMPORARY: the plan is to move the agentOS docs bundle here
-		// (`bundleOf: "agentos"`, `/sandboxes/docs/`) once agentOS is a pure
-		// library like Secure Exec; see HIDDEN.md.
-		id: "sandboxes",
-		name: "Sandboxes",
-		tagline: "A filesystem, shell, and network for code you did not write",
-		repo: "agentos",
-		color: "#9C3A3F",
-		contrast: 5.91,
-		optionalTabs: [],
-		tabs: ["docs"],
-		docsHome: "/agentos/docs/",
-		hidden: true,
-	},
-	{
 		id: "agentos",
 		name: "agentOS",
 		tagline: "A computer for every agent",
@@ -185,11 +169,11 @@ export const PRODUCTS: ProductMetadata[] = [
 		repo: "agentos",
 		color: "#9C3A3F",
 		contrast: 5.91,
+		// Both live inside the Documentation tab rather than as tabs of their
+		// own: Integrations as a fold in the docs sidebar, the Registry as a
+		// button above it. The Overview tab is the marketing page at /agentos/.
 		optionalTabs: ["integrations", "registry"],
-		// Keeps its (hidden, still routed) Use Cases page.
-		tabs: ["overview", "use-cases", "docs", "integrations", "registry"],
-		hiddenTabs: ["use-cases"],
-		standalone: true,
+		tabs: ["overview", "docs"],
 	},
 	{
 		id: "workflows",
@@ -281,7 +265,7 @@ export const PRODUCT_IDS = PRODUCTS.map((product) => product.id);
 /**
  * Whether a product has a docs bundle of its own to assemble and read a
  * sidebar from. Shared sections (Integrations) have none, nor does a product
- * whose only tab links out to another product's docs (Sandboxes -> agentOS).
+ * whose only tab links out to another product's docs (`docsHome`).
  */
 export function ownsDocsBundle(product: ProductMetadata): boolean {
 	// A shared section owns a bundle only when it says where that bundle is.

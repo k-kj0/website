@@ -1,5 +1,18 @@
+import {
+	faBrowser,
+	faCube,
+	faGrid2,
+	faHardDrive,
+	faPlug,
+	faServer,
+	faSquareInfo,
+} from "@rivet-gg/icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { RegistryIconName } from "./registry-icons";
+import { AGENTOS_REGISTRY_CATEGORIES, type RegistryCategory } from "./registry-categories";
+import type { SidebarItem } from "@/lib/sitemap";
 import type { SeoOverrides } from "@/lib/seo";
+import { registryCategoryHref, registryHref } from "@/sitemap/registry";
 
 export interface RegistryEntryBase extends SeoOverrides {
 	slug: string;
@@ -390,4 +403,46 @@ export const registry: RegistryEntry[] = [
 		}
 		seen.add(entry.slug);
 	}
+}
+
+/** The registry groups an entry belongs to, in group order. */
+export function registryCategoriesOf(entry: RegistryEntry): RegistryCategory[] {
+	return AGENTOS_REGISTRY_CATEGORIES.filter((category) =>
+		(entry.types as readonly string[]).includes(category.type),
+	);
+}
+
+/**
+ * Where an entry is documented: its section on its first group's page, e.g.
+ * `/agentos/docs/registry/software/#git`. Undefined for entries in no group
+ * (agents and deploy targets), which have no registry section.
+ */
+export function registryEntryHref(productId: string, entry: RegistryEntry): string | undefined {
+	const [category] = registryCategoriesOf(entry);
+	return category ? `${registryCategoryHref(productId, category)}#${entry.slug}` : undefined;
+}
+
+const CATEGORY_ICONS: Record<string, IconDefinition> = {
+	"file-system": faHardDrive,
+	browser: faBrowser,
+	"sandbox-extension": faServer,
+	software: faCube,
+	binding: faPlug,
+};
+
+/** The Registry fold in a product's Documentation sidebar: its overview, then a page per group. */
+export function registryFold(productId: string): SidebarItem {
+	return {
+		title: "Registry",
+		collapsible: true,
+		icon: faGrid2,
+		pages: [
+			{ title: "Overview", href: registryHref(productId), icon: faSquareInfo },
+			...AGENTOS_REGISTRY_CATEGORIES.map((category) => ({
+				title: category.label,
+				href: registryCategoryHref(productId, category),
+				icon: CATEGORY_ICONS[category.type],
+			})),
+		],
+	};
 }

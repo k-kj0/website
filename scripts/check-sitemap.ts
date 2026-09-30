@@ -44,6 +44,7 @@ import {
 import { integrationSidebar } from "../src/data/integrations";
 import {
 	INTEGRATIONS_ROUTE_PREFIX,
+	PRODUCT_INTEGRATIONS_SEGMENT,
 	SITE_INTEGRATIONS_CONTENT_PREFIX,
 	SITE_INTEGRATIONS_PRODUCT,
 } from "../src/sitemap/integrations";
@@ -53,6 +54,8 @@ import {
 	guidesSidebar,
 	products,
 } from "../src/sitemap/products";
+import { registryCategorySlug, registryHref } from "../src/sitemap/registry";
+import { AGENTOS_REGISTRY_CATEGORIES } from "../src/data/registry-categories";
 import type { AnyPage, SidebarItem } from "../src/lib/sitemap";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -163,6 +166,34 @@ for (const product of products) {
 			}
 			seen.set(href, owner);
 
+			// The Registry is generated from the catalog, not bundle content.
+			const registryRoot = normalizeHref(registryHref(product.id)).replace(/\/$/, "");
+			const bareHref = href.replace(/\/$/, "");
+			if (tab.id === "docs" && (bareHref === registryRoot || bareHref.startsWith(`${registryRoot}/`))) {
+				const rest = bareHref.slice(registryRoot.length + 1);
+				if (rest && !AGENTOS_REGISTRY_CATEGORIES.some((category) => registryCategorySlug(category) === rest)) {
+					errors.push(`${owner} sidebar links ${href}, which is not a registry group`);
+				}
+				continue;
+			}
+			// A non-site product's integrations render inside its docs but are
+			// authored in the bundle's `integrations/` section.
+			const integrationsRoot = normalizeHref(
+				`/${product.id}/docs/${PRODUCT_INTEGRATIONS_SEGMENT}`,
+			);
+			if (tab.id === "docs" && href.startsWith(integrationsRoot)) {
+				const rest = href.slice(integrationsRoot.length).replace(/\/$/, "");
+				if (
+					!contentFileExists(
+						path.join(DOCS_CONTENT, product.id, PRODUCT_INTEGRATIONS_SEGMENT),
+						rest || "index",
+					)
+				) {
+					errors.push(`${owner} sidebar links ${href}, which has no content file`);
+				}
+				continue;
+			}
+
 			const slug = href
 				.slice(`/${product.id}/${tab.id}/`.length)
 				.replace(/\/$/, "");
@@ -185,7 +216,7 @@ for (const product of products) {
 		if (tab.hidden || tab.id === "overview" || tab.id === "use-cases") {
 			continue;
 		}
-		// A tab that links out (Sandboxes' Documentation -> /agentos/docs/)
+		// A tab that links out (`docsHome`)
 		// generates nothing; the bundle's pages are checked under their owner.
 		if (!tab.href.startsWith(`/${product.id}/`)) continue;
 

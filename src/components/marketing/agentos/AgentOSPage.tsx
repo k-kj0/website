@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, useEffect, useRef, useCallback } from 'react';
+import { useId, useState, useEffect, useRef, useCallback, type ComponentProps } from 'react';
 import {
 	ArrowRight,
 	Layers,
@@ -30,7 +30,7 @@ import actorsLogoUrl from '@/images/products/actors-logo.svg';
 import workflowsLogoUrl from '@/images/products/workflows-logo.svg';
 import { wordmarkMaskStyle } from '@/lib/product-accent';
 import { canonicalizeInternalHref } from '@/lib/internalHref';
-import { registry } from '@/data/registry';
+import { registry, registryEntryHref } from '@/data/registry';
 import { REGISTRY_ICONS } from '@/data/registry-icons';
 import { AGENT_SETUP_PROMPTS } from '@/data/agentSetupPrompt';
 import { SetupWithAgentButton } from '@/components/marketing/SetupWithAgentButton';
@@ -43,17 +43,16 @@ import {
 	sandboxCostPerSec,
 } from '@/data/bench';
 import { DeploymentOptions } from '@/components/marketing/DeploymentOptions';
-import { CopyInstallCommand } from '@/components/marketing/CopyInstallCommand';
 import { ClosingCtaPanel } from '@/components/marketing/ClosingCtaPanel';
 import { ProductMotif } from '@/components/marketing/ProductMotif';
 import { SectionRule } from '@/components/marketing/SectionRule';
 import {
 	CARD_TITLE_CLASS,
 	EYEBROW_CLASS,
-	INK_PANEL_GHOST_BUTTON_CLASS,
 	INK_PANEL_LIGHT_BUTTON_CLASS,
 	PRIMARY_INK_BUTTON_CLASS,
 	PRODUCT_HERO_H1_CLASS,
+	PRODUCT_HERO_PRIMARY_BUTTON_CLASS,
 	PRODUCT_HERO_INNER_CLASS,
 	PRODUCT_HERO_SECTION_CLASS,
 	PRODUCT_HERO_SUBTITLE_CLASS,
@@ -301,7 +300,7 @@ export const AnimatedAgentOSLogo = ({ className, displayedAgent, drawDurationSec
 };
 
 // --- Set up with your agent: shared button + shared prompt (src/data/agentSetupPrompt.ts) ---
-const SetupWithAgent = ({ variant = 'accent' }: { variant?: 'accent' | 'light' }) => (
+const SetupWithAgent = ({ variant = 'accent' }: { variant?: ComponentProps<typeof SetupWithAgentButton>['variant'] }) => (
 	<SetupWithAgentButton prompt={AGENT_SETUP_PROMPTS.agentos} variant={variant} />
 );
 
@@ -517,17 +516,17 @@ const frameworks: SupportedAgent[] = [
 		name: 'Eve',
 		monochrome: true,
 		wordmark: true,
-		href: '/agentos/integrations/vercel-eve',
+		href: '/agentos/docs/integrations/vercel-eve',
 	},
 	{
 		src: '/images/frameworks/flue.svg',
 		name: 'Flue',
-		href: '/agentos/integrations/flue',
+		href: '/agentos/docs/integrations/flue',
 	},
 	{
 		src: '/images/frameworks/rivet.svg',
 		name: 'Rivet Actors',
-		href: '/agentos/integrations/rivet-actors',
+		href: '/agentos/docs/integrations/rivet-actors',
 	},
 ];
 
@@ -726,8 +725,11 @@ const Hero = () => {
 
 					{/* Buttons */}
 					<motion.div {...introMotion(5)} className='flex w-full flex-col flex-wrap items-center gap-x-4 gap-y-3 sm:flex-row sm:justify-center'>
-						<CopyInstallCommand command='npm install @rivet-dev/agentos' />
-						<SetupWithAgent />
+						<a href='/agentos/docs/' className={PRODUCT_HERO_PRIMARY_BUTTON_CLASS}>
+							Documentation
+							<ArrowRight className='h-4 w-4' />
+						</a>
+						<SetupWithAgent variant='secondary' />
 					</motion.div>
 				</div>
 			</div>
@@ -1312,7 +1314,7 @@ const RegistryAppTile = ({ entry, hidden }: { entry: (typeof registry)[number]; 
 	const action = entry.status === 'external' ? 'Deploy' : entry.status === 'docs' ? 'Docs' : entry.status === 'config' ? 'Use' : entry.status === 'available' ? 'Get' : 'Soon';
 	return (
 		<a
-			href={canonicalizeInternalHref(external ? entry.href : `/agentos/registry/${entry.slug}`)}
+			href={canonicalizeInternalHref(external ? entry.href : (registryEntryHref('agentos', entry) ?? '/agentos/docs/registry/'))}
 			target={external ? '_blank' : undefined}
 			rel={external ? 'noopener noreferrer' : undefined}
 			aria-hidden={hidden}
@@ -1452,7 +1454,7 @@ const RegistrySection = () => {
 							<RegistryMarqueeRow apps={registryRowB} direction='right' />
 						</div>
 						<div className='mt-8 flex items-center justify-center'>
-							<a href='/agentos/integrations/' className={PRIMARY_INK_BUTTON_CLASS}>
+							<a href='/agentos/docs/registry/' className={PRIMARY_INK_BUTTON_CLASS}>
 								Explore the Registry
 								<ArrowRight className='h-4 w-4' />
 							</a>
@@ -2376,11 +2378,11 @@ const DeploymentSection = () => {
 // action. Repeats the hero CTAs so the reader never scrolls back up to act.
 const ClosingCta = () => (
 	<ClosingCtaPanel title='Turn your backend into the agent platform.' description='Open source under Apache 2.0. One npm install away.'>
-		<SetupWithAgent variant='light' />
-		<a href='/agentos/docs/' className={INK_PANEL_GHOST_BUTTON_CLASS}>
-			Read the Docs
+		<a href='/agentos/docs/' className={INK_PANEL_LIGHT_BUTTON_CLASS}>
+			Documentation
 			<ArrowRight className='h-4 w-4' />
 		</a>
+		<SetupWithAgent variant='ghost' />
 	</ClosingCtaPanel>
 );
 

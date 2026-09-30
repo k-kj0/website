@@ -1,0 +1,77 @@
+---
+// One agentOS Registry entry as a section of its group's docs page: an anchored
+// heading, its facts, then how to install and wire it up.
+import type { RegistryDoc } from '@/data/registry-docs';
+import { Heading } from '@/components/Heading';
+import { Code } from '@/components/v2/Code';
+import { highlightDocsCode } from '@/mdx/rehype';
+import { canonicalizeInternalHref } from '@/lib/internalHref';
+
+interface Props {
+	doc: RegistryDoc;
+}
+
+const { doc } = Astro.props;
+const installHtml = doc.install ? await highlightDocsCode(doc.install, 'sh') : undefined;
+const setupHtml = doc.setup ? await highlightDocsCode(doc.setup.code, 'ts') : undefined;
+---
+
+<section>
+	<Heading level={2} id={doc.slug}>
+		{doc.title}
+		{doc.badge && (
+			<span class="ml-3 inline-flex items-center rounded-md border border-pine/20 bg-pine/5 px-2 py-0.5 align-middle text-xs font-medium text-pine">
+				{doc.badge}
+			</span>
+		)}
+	</Heading>
+	<p>{doc.description}</p>
+	<div class="overflow-x-auto">
+		<table>
+			<thead>
+				<tr>{doc.details.map((cell) => <th>{cell.label}</th>)}</tr>
+			</thead>
+			<tbody>
+				<tr>
+					{doc.details.map((cell) => {
+						const value = cell.code ? <code>{cell.value}</code> : cell.value;
+						const external = cell.href?.startsWith('http');
+						return (
+							<td>
+								{cell.href ? (
+									<a
+										href={canonicalizeInternalHref(cell.href)}
+										{...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+									>
+										{value}
+									</a>
+								) : (
+									value
+								)}
+							</td>
+						);
+					})}
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	{doc.comingSoon && (
+		<p>
+			Coming soon. <a href="https://github.com/rivet-dev/agentos/issues" target="_blank" rel="noopener noreferrer">Request an extension</a> to help us prioritize it.
+		</p>
+	)}
+	{doc.install && (
+		<>
+			<Heading level={3} anchor={false}>Install</Heading>
+			<Code language="sh" code={doc.install} highlightedCode={installHtml} />
+		</>
+	)}
+	{doc.setup && (
+		<>
+			<Heading level={3} anchor={false}>{doc.setup.title}</Heading>
+			<p>{doc.setup.summary}</p>
+			<Code language="ts" code={doc.setup.code} highlightedCode={setupHtml} />
+		</>
+	)}
+	{doc.note && <p>{doc.note}</p>}
+</section>

@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { registryDocs, registryDocSchema } from './data/registry-docs';
 
 const seoOverrides = {
 	seoTitle: z.string().optional(),
@@ -41,6 +42,14 @@ const overviews = defineCollection({
 		description: z.string(),
 		...seoOverrides,
 	}),
+});
+
+// The agentOS Registry, one entry per catalog item in a standard shape (see
+// src/data/registry-docs.ts). Rendered as the Registry's docs pages by
+// src/pages/agentos/docs/registry/[...slug].astro.
+const registry = defineCollection({
+	loader: async () => registryDocs.map((doc) => ({ id: doc.slug, ...doc })),
+	schema: registryDocSchema,
 });
 
 const guides = defineCollection({
@@ -92,6 +101,7 @@ export const collections = {
 	docs,
 	selfHost,
 	overviews,
+	registry,
 	guides,
 	posts,
 };

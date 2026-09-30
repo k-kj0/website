@@ -24,16 +24,13 @@ const footer = {
 	// The actor types, in docs-tab order. Derived from the product registry so
 	// the footer cannot drift from it; each entry points where the product's
 	// own link lands (the old `/actors/` marketing URLs redirect).
-	actors: ["actors", "agents", "workflows", "sandboxes", "dynamic-apps"]
+	actors: ["actors", "agents", "workflows", "agentos", "dynamic-apps"]
 		.map((id) => products.find((product) => product.id === id))
 		.filter((item) => item && !item.unlaunched)
 		.map((item) => ({ name: item.name, href: item.href })),
 	// Libraries run inside actors rather than being one; each keeps its own
-	// subsite and this is the only place the main site lists them together.
-	libraries: [
-		{ name: "agentOS", href: "/agentos/" },
-		{ name: "Secure Exec", href: "/secure-exec/" },
-	],
+	// subsite. agentOS is listed under the actor types above instead.
+	libraries: [{ name: "Secure Exec", href: "/secure-exec/" }],
 	company: [
 		{ name: "Pricing", href: "/pricing" },
 		{ name: "Bring Your Own Cloud", href: "/docs/deploy/byoc/" },

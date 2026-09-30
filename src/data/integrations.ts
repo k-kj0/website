@@ -1,4 +1,4 @@
-import { faSquareInfo } from "@rivet-gg/icons";
+import { faPuzzlePiece, faSquareInfo } from "@rivet-gg/icons";
 import type { SidebarItem } from "@/lib/sitemap";
 import type { SeoOverrides } from "@/lib/seo";
 import { integrationsHref } from "@/sitemap/integrations";
@@ -129,7 +129,7 @@ const AGENTOS: Integration[] = [
 		description: "Run agentOS on Rivet Actors for persistence and scheduling.",
 		slug: "rivet-actors",
 		category: "Platform",
-		icon: { src: "/images/vendors/rivet.svg" },
+		icon: { src: "/images/frameworks/rivet.svg" },
 		exampleUrl:
 			"https://github.com/rivet-dev/agentos/tree/main/examples/quickstart-app",
 		sourceUrl:
@@ -205,4 +205,29 @@ export function integrationSidebar(productId: string): SidebarItem[] {
 			})),
 		})),
 	] satisfies SidebarItem[];
+}
+
+/**
+ * A product's integrations as one fold in its docs sidebar: an Overview entry,
+ * then every integration in category order. Used by products whose
+ * integrations live inside their Documentation tab (agentOS) rather than in
+ * the site-wide Integrations section.
+ */
+export function integrationFold(productId: string): SidebarItem | undefined {
+	const items = integrationGroups(productId).flatMap((group) => group.items);
+	if (items.length === 0) return undefined;
+	return {
+		title: "Integrations",
+		collapsible: true,
+		icon: faPuzzlePiece,
+		pages: [
+			{ title: "Overview", href: integrationsHref(productId), icon: faSquareInfo },
+			...items.map(({ title, slug, icon, badge }) => ({
+				title,
+				href: integrationsHref(productId, slug),
+				icon,
+				badge,
+			})),
+		],
+	};
 }

@@ -3,8 +3,9 @@
 //
 // Pages come from the Actors bundle's `integrations` section
 // (src/content/docs/actors/integrations/**), re-rooted here; see
-// src/sitemap/integrations.ts. Standalone subsites (agentOS) keep their own
-// `/<product>/integrations/` tab through the per-product route.
+// src/sitemap/integrations.ts. Any other product (agentOS) renders its
+// integrations inside its docs (`/<product>/docs/integrations/`) through the
+// per-product route.
 import { getCollection } from 'astro:content';
 import { ogImageFor } from '@/lib/ogImage';
 import DocsArticlePage from '@/components/docs/DocsArticlePage.astro';

@@ -11,7 +11,7 @@ working — they are just unreachable from the nav.
 
 | Product | Tab | Why | To restore |
 | --- | --- | --- | --- |
-| All | Use Cases | Only agentOS has real copy; the other three are stubs | Write the three, add `"use-cases"` back to each `tabs` |
+| All | Use Cases | The other three are stubs, and agentOS retired its page (`/agentos/use-cases/` redirects to `/guides/`) | Write them, add `"use-cases"` back to each `tabs` |
 | Actors | Learn | Cookbooks are thin and the section has no landing copy | Add `"learn"` to `optionalTabs` and `tabs` |
 | agentOS | Learn | Was generated from `examples/*/README.md` by a loader that did not survive the split. Content deleted; READMEs still in `~/agentos/examples/` | Port the loader or convert the READMEs to MDX |
 | Dynamic Apps | Learn | Placeholder only, deleted | Write it |
@@ -30,7 +30,6 @@ Still routed at `/actors/learn/*`, unreachable from the nav:
 | Product | Why |
 | --- | --- |
 | Agents (`/agents/docs`) | **Temporary, until Agents launches.** Built and routed, but `unlaunched: true` in `product-metadata.ts` drops it from every listing: the homepage "there's an Actor for it" plates (the Actors primitive stands in its slot wearing the Agents blue — see `HOMEPAGE_ACTOR_PLATES` in `src/data/actor-types.ts`), the docs tab strip, the Documentation menu, the footer, the registry, and the `/docs/` card grid (commented out in `src/content/docs/docs/index.mdx`). To restore: delete `unlaunched`, delete the stand-in, uncomment the card |
-| Sandboxes (`/agentos/docs`) | **Temporary.** Sandboxes is agentOS as an API, so its Sandboxes tab in the docs strip and its listings link to the agentOS docs at `/agentos/docs/` (`docsHome` in `product-metadata.ts`); it owns no bundle or routes of its own. The plan is to serve the agentOS bundle under `/sandboxes/docs/` (`bundleOf` + `RerootLinks.astro` already support it) once the agentOS pages are ready to move; until then no `/sandboxes/*` path exists |
 | Rivet Cloud | Managed platform, not one of the four pillars. It has no product vertical: its bundle renders inside the Deploy section (`/orchestrate/deploy/{cloud,byoc}/`) and its marketing page is `/pricing/`. `hidden: true` keeps it out of the switcher |
 | Secure Exec (`/secure-exec`) | The isolate runtime underneath agentOS, moved here from secureexec.dev. A library, not one of the four pillars. `hidden: true` keeps it out of the switcher and the `/docs` index; it is reachable from the footer. Its Overview keeps secureexec.dev's own dark design on purpose, scoped under `.secure-exec-page`, with the header and footer forced dark for that page only (`darkChrome`) |
 
@@ -41,7 +40,7 @@ Pages that render a TODO callout. These are live and indexed.
 | Page | Owner |
 | --- | --- |
 | `/actors/integrations` | this repo — now a card grid, remove once copy lands |
-| `/agentos/integrations` | this repo |
+| `/agentos/docs/integrations` | this repo |
 | `/actors/docs/http-api` | rivet repo |
 | `/agentos/docs/software` (was `/agentos/docs/software`) | agentos repo |
 | `/dynamic-apps/docs`, `/docs/concepts`, `/docs/quickstart` | dynamic-apps repo — whole vertical unwritten |

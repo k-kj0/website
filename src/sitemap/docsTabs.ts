@@ -8,9 +8,7 @@
  * Actor-type tabs and Integrations carry the product's mark inline.
  *
  * Overview, Guides, Deploy, and API are site-wide sections owned by no product
- * (`/docs/`, `/guides/`, `/docs/deploy/`, `/docs/api/`, `/integrations/`). Integrations
- * stays highlighted on every product's own copy too (`/agentos/integrations/`)
- * so switching products inside the section does not lose the tab. Standalone
+ * (`/docs/`, `/guides/`, `/docs/deploy/`, `/docs/api/`, `/integrations/`). Standalone
  * subsites (`Product.standalone`) are excluded: they keep their own second
  * header row, so their tab here links out and never lights up.
  */
@@ -32,7 +30,7 @@ export type DocsTabId =
 	| "actors"
 	| "agents"
 	| "workflows"
-	| "sandboxes"
+	| "agentos"
 	| "dynamic-apps"
 	| "integrations";
 
@@ -97,11 +95,11 @@ export const DOCS_TABS: readonly DocsTab[] = (
 			productId: "workflows",
 		},
 		{
-			id: "sandboxes",
-			title: "Sandboxes",
+			id: "agentos",
+			title: "agentOS",
 			href: "/agentos/docs/",
 			group: "actors",
-			productId: "sandboxes",
+			productId: "agentos",
 		},
 		{
 			id: "dynamic-apps",
@@ -125,13 +123,13 @@ const PRODUCT_TABS: Record<string, DocsTabId> = {
 	actors: "actors",
 	agents: "agents",
 	workflows: "workflows",
-	sandboxes: "sandboxes",
+	agentos: "agentos",
 	"dynamic-apps": "dynamic-apps",
 };
 
 /**
  * Which tab a docs path belongs to. Undefined for pages that have no tab of
- * their own, such as the standalone subsites (agentOS, Secure Exec), which
+ * their own, such as the standalone subsites (Secure Exec), which
  * render their own product bar instead.
  */
 export function activeDocsTab(pathname: string): DocsTabId | undefined {

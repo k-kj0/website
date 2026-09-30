@@ -26,7 +26,7 @@ export interface ActorRegistryEntry {
 	 * Product whose accent tile and wordmark this entry wears, so an actor type
 	 * looks the same here as it does on the landing page.
 	 */
-	productId?: "actors" | "agents" | "agentos" | "workflows" | "sandboxes" | "dynamic-apps";
+	productId?: "actors" | "agents" | "agentos" | "workflows" | "dynamic-apps";
 	/** Where the card's "Docs" link goes. */
 	href: string;
 }
@@ -67,11 +67,11 @@ export const actorRegistry: ActorRegistryEntry[] = [
 	},
 	{
 		slug: "sandbox-actor",
-		title: "Sandboxes",
+		title: "agentOS",
 		description:
 			"A filesystem, shell, and network for code you did not write.",
 		types: ["first-party"],
-		productId: "sandboxes",
+		productId: "agentos",
 		href: "/agentos/docs/",
 	},
 	{

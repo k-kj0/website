@@ -49,7 +49,7 @@ const {
 // registry) inherit that product's card; other pages take the site-wide card.
 const effectiveOgImage = ogImage ?? productOgImage(productId);
 const pathname = Astro.url.pathname;
-// Standalone subsites (agentOS, Secure Exec) always take the two-row header:
+// Standalone subsites (Secure Exec) always take the two-row header:
 // their product bar is the subnav on every page of the subsite.
 const showDocsHeader =
 	productId !== undefined &&

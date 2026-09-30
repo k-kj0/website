@@ -21,8 +21,6 @@ export const productLogos: Record<string, { src: string }> = {
 	// own mark: the ring with the robot glyph the homepage plate uses.
 	agents: agentsLogoUrl,
 	agentos: agentosLogoUrl,
-	// Sandboxes are agentOS as an API, so they carry the agentOS mark.
-	sandboxes: agentosLogoUrl,
 	workflows: workflowsLogoUrl,
 	"dynamic-apps": dynamicAppsLogoUrl,
 	// The puzzle-piece glyph inside the same inset ring as the actor types.

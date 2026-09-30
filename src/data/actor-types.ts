@@ -13,7 +13,7 @@ import { getProduct, isListed } from "@/sitemap/products";
  */
 export interface ActorType {
 	/** Product id; also the wordmark (`productLogos`) and, by default, the accent. */
-	id: "actors" | "agents" | "workflows" | "sandboxes" | "dynamic-apps";
+	id: "actors" | "agents" | "workflows" | "agentos" | "dynamic-apps";
 	/** Product whose accent the plate wears, when not its own. */
 	accentId?: "agents";
 	name: string;
@@ -44,8 +44,7 @@ const ORDERED: {
 		motifId: "workflows",
 	},
 	{
-		// Sandboxes are agentOS as an API, so they borrow its motif and mark.
-		id: "sandboxes",
+		id: "agentos",
 		premise: "A filesystem, shell, and network for code you did not write",
 		motifId: "agentos",
 	},
@@ -62,7 +61,9 @@ function resolve(entry: (typeof ORDERED)[number]): ActorType {
 	return {
 		...entry,
 		name: product.name,
-		href: product.href,
+		// The docs landing, not the product link: agentOS's product link is its
+		// marketing page.
+		href: product.tabs.find((tab) => tab.id === "docs")?.href ?? product.href,
 		badge: product.badge,
 	};
 }

@@ -2,7 +2,12 @@
 
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
-import { INK_PANEL_LIGHT_BUTTON_CLASS, PRODUCT_HERO_PRIMARY_BUTTON_CLASS } from '@/components/marketing/typography';
+import {
+	INK_PANEL_GHOST_BUTTON_CLASS,
+	INK_PANEL_LIGHT_BUTTON_CLASS,
+	PRODUCT_HERO_PRIMARY_BUTTON_CLASS,
+	PRODUCT_HERO_SECONDARY_BUTTON_CLASS,
+} from '@/components/marketing/typography';
 
 // Firefox (and Chrome) only expose navigator.clipboard in secure contexts, so
 // a page served over plain http on a LAN address has no clipboard API. Fall
@@ -37,8 +42,17 @@ async function copyText(text: string): Promise<boolean> {
 
 // "Set up with your agent": copies a ready-to-paste prompt for a coding agent.
 // The accent variant is the hero's single ember; `light` is for ink panels.
+// `secondary` and `ghost` are their companions for pages whose primary action
+// is something else (agentOS's Get Started), on paper and on ink respectively.
 // Shared by all four product pages so the affordance is identical everywhere.
-export const SetupWithAgentButton = ({ prompt, variant = 'accent' }: { prompt: string; variant?: 'accent' | 'light' }) => {
+const VARIANT_CLASSES = {
+	accent: PRODUCT_HERO_PRIMARY_BUTTON_CLASS,
+	secondary: PRODUCT_HERO_SECONDARY_BUTTON_CLASS,
+	light: INK_PANEL_LIGHT_BUTTON_CLASS,
+	ghost: INK_PANEL_GHOST_BUTTON_CLASS,
+} as const;
+
+export const SetupWithAgentButton = ({ prompt, variant = 'accent' }: { prompt: string; variant?: keyof typeof VARIANT_CLASSES }) => {
 	const [copied, setCopied] = useState(false);
 
 	const handleCopy = async () => {
@@ -53,7 +67,7 @@ export const SetupWithAgentButton = ({ prompt, variant = 'accent' }: { prompt: s
 			type='button'
 			onClick={handleCopy}
 			aria-label={copied ? 'Agent setup prompt copied' : 'Set up with your agent'}
-			className={variant === 'light' ? INK_PANEL_LIGHT_BUTTON_CLASS : PRODUCT_HERO_PRIMARY_BUTTON_CLASS}
+			className={VARIANT_CLASSES[variant]}
 		>
 			{copied ? <Check className='h-4 w-4' /> : <Copy className='h-4 w-4' />}
 			{/* Reserve the width of the longest label so the button doesn't shrink on copy */}

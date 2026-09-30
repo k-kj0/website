@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { deploySlugForContentId } from "../sitemap/deploy";
 import { apiSlugForContentId } from "../sitemap/docs-sources";
 import { guidesSlugForContentId } from "../sitemap/guides";
-import { integrationsSlugForContentId } from "../sitemap/integrations";
+import {
+	integrationsSlugForContentId,
+	productIntegrationsSlugForContentId,
+} from "../sitemap/integrations";
 import { PRODUCTS } from "../sitemap/product-metadata";
 
 export const SITE_BASE_URL = "https://rivet.dev";
@@ -13,15 +16,17 @@ export const PROJECT_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 // Docs slugs are product-scoped (`actors/docs/state`, `agentos/tutorials`),
 // so the collection slug is already the site path. The exceptions are the
 // Rivet Cloud bundle, which renders inside the Deploy section, the HTTP API
-// bundle, which renders under `/docs/api`, and the Actors `learn` and
+// bundle, which renders under `/docs/api`, the Actors `learn` and
 // `integrations` sections, which render as the site's Guides and Integrations
-// sections.
+// sections, and any other product's `integrations` section, which renders
+// inside that product's docs (`/agentos/docs/integrations/`).
 export function getDocsPath(slug: string) {
 	const rerooted =
 		deploySlugForContentId(slug) ??
 		apiSlugForContentId(slug) ??
 		guidesSlugForContentId(slug) ??
-		integrationsSlugForContentId(slug);
+		integrationsSlugForContentId(slug) ??
+		productIntegrationsSlugForContentId(slug);
 	if (rerooted) return `/${rerooted}`;
 
 	return slug ? `/${slug}` : "/actors/docs";
@@ -32,12 +37,18 @@ export function getDocsPath(slug: string) {
 //   (`docsHome`, e.g. a product serving a shared bundle) keeps any
 //   `<product>/docs/**` content, but nothing renders there;
 // - a product with a restricted `tabs` list may carry other sections in its
-//   bundle (e.g. `integrations` and `use-cases`) that never route.
+//   bundle (e.g. `integrations` and `use-cases`) that never route. The
+//   exception is `integrations` on a product that lists it in `optionalTabs`:
+//   those pages route inside its docs rather than as a tab of their own.
 const UNROUTED_DOCS_PREFIXES = PRODUCTS.flatMap((product) => [
 	...(product.docsHome ? [`${product.id}/docs`] : []),
 	...(product.tabs
 		? (["docs", "integrations", "use-cases"] as const)
 				.filter((tab) => !product.tabs?.includes(tab))
+				.filter(
+					(tab) =>
+						!(tab === "integrations" && product.optionalTabs.includes("integrations")),
+				)
 				.map((tab) => `${product.id}/${tab}`)
 		: []),
 ]);

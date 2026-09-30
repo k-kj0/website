@@ -154,33 +154,52 @@ function looksLikeMermaid(code: string): boolean {
 	);
 }
 
+/** The docs' Shiki highlighter, shared by MDX code blocks and data-built pages. */
+async function docsHighlighter() {
+	highlighter ??= await shiki.getSingletonHighlighter({
+		themes: [theme, 'github-dark'],
+		langs: [
+			"bash",
+			"batch",
+			"cpp",
+			"csharp",
+			"docker",
+			"gdscript",
+			"html",
+			"ini",
+			"js",
+			"json",
+			"jsonc",
+			"powershell",
+			"ts",
+			"typescript",
+			"yaml",
+			"http",
+			"prisma",
+			"rust",
+			"swift",
+			"toml",
+		],
+	});
+	return highlighter;
+}
+
+/**
+ * Highlight code exactly as a fenced block in the docs MDX is highlighted, for
+ * pages rendered from data rather than MDX (the agentOS Registry). Pass the
+ * result to the `Code` component as `highlightedCode`.
+ */
+export async function highlightDocsCode(code: string, lang: string): Promise<string> {
+	return (await docsHighlighter()).codeToHtml(code, {
+		lang,
+		themes: { light: theme.name, dark: 'github-dark' },
+		transformers: [transformerNotationFocus()],
+	});
+}
+
 function rehypeShiki() {
 	return async (tree) => {
-		highlighter ??= await shiki.getSingletonHighlighter({
-			themes: [theme, 'github-dark'],
-			langs: [
-				"bash",
-				"batch",
-				"cpp",
-				"csharp",
-				"docker",
-				"gdscript",
-				"html",
-				"ini",
-				"js",
-				"json",
-				"jsonc",
-				"powershell",
-				"ts",
-				"typescript",
-				"yaml",
-				"http",
-				"prisma",
-				"rust",
-				"swift",
-				"toml",
-			],
-		});
+		await docsHighlighter();
 
 		visit(tree, "element", (node, _index, parentNode) => {
 			if (

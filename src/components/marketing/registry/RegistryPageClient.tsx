@@ -14,6 +14,10 @@ import { SITE_WIDE_CALLOUT_CLASS } from "../layout";
 import { InkPanel } from "../editorial/InkPanel";
 import { RegistryIconTile } from "./RegistryIconTile";
 import { canonicalizeInternalHref } from "@/lib/internalHref";
+import {
+	AGENTOS_REGISTRY_CATEGORIES,
+	type RegistryCategory,
+} from "../../../data/registry-categories";
 
 // The slim, serializable slice of a RegistryEntry the storefront renders. The
 // index page maps the full registry into this shape so multi-line config
@@ -36,57 +40,7 @@ export interface RegistryCardEntry {
 	href?: string;
 }
 
-export interface RegistryCategory {
-	/** Matched against each entry's `types`. */
-	type: string;
-	label: string;
-	description: string;
-}
-
-/** The agentOS taxonomy, and the default when a page supplies none. */
-const CATEGORY_ORDER: RegistryCategory[] = [
-	{
-		type: "agent",
-		label: "Agents",
-		description:
-			"Coding agents with programmatic API access and universal transcript format (ACP).",
-	},
-	{
-		type: "file-system",
-		label: "File Systems",
-		description:
-			"Mount these file systems as the root or at any sub-path inside the agent's environment.",
-	},
-	{
-		type: "browser",
-		label: "Browsers",
-		description:
-			"Let agents browse the web from inside the VM with cloud browser providers.",
-	},
-	{
-		type: "sandbox-extension",
-		label: "Sandbox Mounting",
-		description:
-			"agentOS is a hybrid OS. Mount sandbox file systems and interact with them via bindings for heavier workloads. Use agentOS natively for lightweight tasks.",
-	},
-	{
-		type: "software",
-		label: "Software",
-		description:
-			"Wasm command packages that run inside the agent's environment. Install individually or use meta-packages.",
-	},
-	{
-		type: "binding",
-		label: "Bindings",
-		description:
-			"Host-side bindings and integrations that extend agent capabilities.",
-	},
-	{
-		type: "deploy",
-		label: "Deploy",
-		description: "Run agentOS in production on the platform of your choice.",
-	},
-];
+export type { RegistryCategory } from "../../../data/registry-categories";
 
 const MAX_SHELF_ITEMS = 6;
 const CAROUSEL_INTERVAL = 6000;
@@ -486,7 +440,7 @@ function FooterCta() {
 export default function RegistryPageClient({
 	entries,
 	hrefBase = "/registry",
-	categoryOrder = CATEGORY_ORDER,
+	categoryOrder = AGENTOS_REGISTRY_CATEGORIES,
 	footerCta = true,
 }: {
 	entries: RegistryCardEntry[];

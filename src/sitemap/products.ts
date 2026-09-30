@@ -23,8 +23,9 @@ import {
 import { API_DOCS_NAMESPACE, SITE_DOCS_NAMESPACE } from "./docs-sources";
 import { CLOUD_BUNDLE_ID } from "./deploy";
 import { rerootLearnHref, SITE_GUIDES_SIDEBAR_GROUPS } from "./guides";
-import { integrationSidebar } from "@/data/integrations";
-import { integrationsHref } from "./integrations";
+import { integrationFold, integrationSidebar } from "@/data/integrations";
+import { registryFold } from "@/data/registry";
+import { integrationsHref, SITE_INTEGRATIONS_PRODUCT } from "./integrations";
 import { canonicalizeInternalHref } from "@/lib/internalHref";
 
 /**
@@ -77,8 +78,8 @@ function bundleSidebars(bundleId: string) {
 }
 
 function productSidebars(meta: ProductMetadata) {
-	// A product whose Documentation tab links out (Sandboxes -> agentOS) has
-	// no bundle of its own to read.
+	// A product whose Documentation tab links out (`docsHome`) has no bundle
+	// of its own to read.
 	if (!ownsDocsBundle(meta)) return { docs: [], integrations: [] };
 	const bundle = bundleSidebars(meta.id);
 	// A shared bundle's sidebar is authored against its source product's routes
@@ -245,13 +246,46 @@ function withOverviewTitle(
 	});
 }
 
+/**
+ * A product's Documentation sidebar: its bundle's own sidebar, plus the pages
+ * this site adds to it. The Registry is a fold at the end of the opening
+ * General group, and a non-site product's Integrations becomes a fold just above the
+ * bundle's closing Reference group (or at the end when there is none).
+ */
+function docsSidebar(meta: ProductMetadata, bundleDocs: SidebarItem[]): SidebarItem[] {
+	const has = (section: "integrations" | "registry") =>
+		meta.optionalTabs.includes(section);
+	const fold =
+		has("integrations") && meta.id !== SITE_INTEGRATIONS_PRODUCT
+			? integrationFold(meta.id)
+			: undefined;
+	const docs = [...bundleDocs];
+	if (has("registry")) {
+		const registry = registryFold(meta.id);
+		const general = docs.findIndex(
+			(item) => "pages" in item && "title" in item && item.title === "General",
+		);
+		const group = docs[general];
+		if (group && "pages" in group) {
+			docs[general] = { ...group, pages: [...group.pages, registry] };
+		} else {
+			docs.unshift(registry);
+		}
+	}
+	if (fold) {
+		const reference = docs.findIndex(
+			(item) => "title" in item && item.title === "Reference",
+		);
+		docs.splice(reference === -1 ? docs.length : reference, 0, fold);
+	}
+	return docs;
+}
+
 function tabs(
 	meta: ProductMetadata,
 	sidebars: { docs: SidebarItem[]; integrations: SidebarItem[] },
 ): ProductTab[] {
 	const id = meta.id;
-	const has = (tab: "integrations" | "registry") =>
-		meta.optionalTabs.includes(tab);
 
 	const all: ProductTab[] = [
 		// Only products that still have a marketing page (an explicit `tabs`
@@ -276,18 +310,24 @@ function tabs(
 		{
 			id: "docs",
 			title: "Documentation",
-			// A product whose docs are served under another (Sandboxes -> agentOS)
-			// links out; the tab owns no pages here.
+			// A product whose docs are served under another (`docsHome`) links
+			// out; the tab owns no pages here.
 			href: meta.docsHome ?? `/${id}/docs/`,
 			// Standalone subsites keep their bundle's own root title: their docs
 			// still open on an introduction, not on the former landing page.
 			sidebar: meta.docsHome
 				? []
-				: meta.standalone
-					? sidebars.docs
-					: withOverviewTitle(sidebars.docs, `/${id}/docs`),
+				: docsSidebar(
+						meta,
+						meta.standalone
+							? sidebars.docs
+							: withOverviewTitle(sidebars.docs, `/${id}/docs`),
+					),
 		},
-		...(has("integrations")
+		// Only the site product's Integrations is a tab (linking to the root
+		// section). Any other product's integrations are a fold in its docs
+		// sidebar; see `docsSidebar`.
+		...(meta.optionalTabs.includes("integrations") && id === SITE_INTEGRATIONS_PRODUCT
 			? [
 					{
 						id: "integrations" as const,
@@ -299,17 +339,6 @@ function tabs(
 						// logos and category groups, which a product repo's sidebar.json
 						// has no way to express.
 						sidebar: integrationSidebar(id),
-					},
-				]
-			: []),
-		...(has("registry")
-			? [
-					{
-						// A standalone catalog with its own layout, not a docs section.
-						id: "registry" as const,
-						title: "Registry",
-						href: `/${id}/registry/`,
-						sidebar: [],
 					},
 				]
 			: []),

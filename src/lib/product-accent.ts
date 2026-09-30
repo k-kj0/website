@@ -142,23 +142,6 @@ CLASSES.agents = {
 	textHover: "hover:text-product-agents",
 };
 
-// Sandboxes are the actor type agentOS runs in; they carry their own teal so
-// the tile reads apart from agentOS's red in the tab strip and menus.
-CLASSES.sandboxes = {
-	text: "text-product-sandboxes",
-	tint: "bg-product-sandboxes-soft",
-	border: "border-product-sandboxes-hairline",
-	fill: "bg-product-sandboxes",
-	underline: "decoration-product-sandboxes",
-	tintHover: "hover:bg-product-sandboxes-soft",
-	activeBorder: "aria-current-page:border-product-sandboxes",
-	borderHover: "hover:border-product-sandboxes-hairline",
-	activeText: "aria-current-page:text-product-sandboxes",
-	activeBorderLeft: "aria-current-page:border-l-product-sandboxes",
-	focusRing: "focus-visible:ring-product-sandboxes",
-	textHover: "hover:text-product-sandboxes",
-};
-
 // Integrations is a shared docs section with a gray tile, so it can sit beside
 // the actor types in the tab strip and the Documentation menu.
 CLASSES.integrations = {

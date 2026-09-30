@@ -20,6 +20,10 @@ import { getProductMetadata } from "../sitemap/product-metadata";
 import { deploySlugForContentId } from "../sitemap/deploy";
 import { apiSlugForContentId } from "../sitemap/docs-sources";
 import { GUIDES_ROUTE_PREFIX, guidesSlugForContentId, SITE_GUIDES } from "../sitemap/guides";
+import { productIntegrationsSlugForContentId } from "../sitemap/integrations";
+import { registryCategorySlug } from "../sitemap/registry";
+import { AGENTOS_REGISTRY_CATEGORIES } from "../data/registry-categories";
+import { registryCategoryMarkdown, registryOverviewMarkdown } from "../data/registry-docs";
 import { listSnippetFiles, mdxToMarkdown } from "./mdx-to-markdown";
 import { isRoutedDocsContentId, normalizeSlug, PROJECT_ROOT } from "./shared";
 
@@ -78,7 +82,7 @@ export function listDocPages(): DocPage[] {
 		// renders inside the Deploy section, the HTTP API bundle under
 		// `/docs/api`, and the Actors `learn` section as the Guides tab instead.
 		const contentId = normalizeSlug(file.replace(/\.mdx$/, ""));
-		// Shared bundles (agentOS -> Sandboxes) are walked twice; only the
+		// Shared bundles (`bundleOf`) are walked twice; only the
 		// product that routes them gets a Markdown mirror and search entries.
 		if (!isRoutedDocsContentId(contentId)) continue;
 		pages.push({
@@ -87,6 +91,7 @@ export function listDocPages(): DocPage[] {
 				deploySlugForContentId(contentId) ??
 				apiSlugForContentId(contentId) ??
 				guidesSlugForContentId(contentId) ??
+				productIntegrationsSlugForContentId(contentId) ??
 				contentId,
 			title,
 			description: description ?? "",
@@ -125,6 +130,30 @@ export function listDocPages(): DocPage[] {
 		const index = pages.findIndex((candidate) => candidate.slug === slug);
 		if (index === -1) pages.push(page);
 		else pages[index] = page;
+	}
+
+	// The agentOS Registry: Astro pages built from the catalog, mirrored here
+	// from the same normalized entries (see src/data/registry-docs.ts).
+	const registrySource = path.join(PROJECT_ROOT, "src/data/registry.ts");
+	pages.push({
+		product: "agentos",
+		slug: "agentos/docs/registry",
+		title: "Registry",
+		description: "File systems, browsers, sandbox mounting, software packages, and bindings for agentOS.",
+		sourcePath: registrySource,
+		body: registryOverviewMarkdown("agentos"),
+		snippetFiles: [],
+	});
+	for (const category of AGENTOS_REGISTRY_CATEGORIES) {
+		pages.push({
+			product: "agentos",
+			slug: `agentos/docs/registry/${registryCategorySlug(category)}`,
+			title: category.label,
+			description: category.description,
+			sourcePath: registrySource,
+			body: registryCategoryMarkdown(category),
+			snippetFiles: [],
+		});
 	}
 
 	for (const guide of SITE_GUIDES) {

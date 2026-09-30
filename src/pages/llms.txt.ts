@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ site }) => {
 		`${siteUrl}/enterprise/`,
 		`${siteUrl}/startups/`,
 		`${siteUrl}/careers/`,
-		`${siteUrl}/agentos/registry/`,
+		`${siteUrl}/agentos/docs/registry/`,
 		`${siteUrl}/blog/`,
 		`${siteUrl}/support/`,
 		`${siteUrl}/talk-to-an-engineer/`,

@@ -144,8 +144,13 @@ const explicitRedirects = {
 	// vertical on this site, so these land on `/agentos/*` rather than off-site.
 	'/agent-os': '/agentos/',
 	'/agent-os/pricing': '/pricing/',
-	'/agent-os/use-cases': '/agentos/use-cases/',
-	'/agent-os/registry': '/agentos/registry/',
+	'/agent-os/use-cases': '/guides/',
+	'/agent-os/registry': '/agentos/docs/registry/',
+	// agentOS dropped its own tab bar: the Registry is a section of its docs
+	// (old entry pages collapse onto it via the wildcard below), and the Use Cases page
+	// was retired for the site-wide Guides.
+	'/agentos/registry': '/agentos/docs/registry/',
+	'/agentos/use-cases': '/guides/',
 	// The integrations pages live at the site root now. These are not covered
 	// by legacyDocsRedirects because they moved tab, not just prefix.
 	'/docs/integrations': '/integrations/',
@@ -415,6 +420,20 @@ function bundleSplitRedirects() {
 	return map;
 }
 
+// agentOS's integrations were a tab of their own at `/agentos/integrations/...`
+// before moving inside its docs at `/agentos/docs/integrations/...`. Every page
+// keeps its slug. Mirrors `productIntegrationsSlugForContentId` in
+// `src/sitemap/integrations.ts`.
+function agentosIntegrationsRedirects() {
+	const map = {};
+	for (const slug of mdxSlugs(path.join(CONTENT_ROOT, 'docs/agentos/integrations'))) {
+		map[slug ? `/agentos/integrations/${slug}` : '/agentos/integrations'] = slug
+			? `/agentos/docs/integrations/${slug}/`
+			: '/agentos/docs/integrations/';
+	}
+	return map;
+}
+
 export const redirects = {
 	...legacyDocsRedirects(),
 	...bundleSplitRedirects(),
@@ -422,6 +441,7 @@ export const redirects = {
 	...selfHostRedirects(),
 	...guidesRedirects(),
 	...integrationsRedirects(),
+	...agentosIntegrationsRedirects(),
 	...explicitRedirects,
 };
 
@@ -438,7 +458,11 @@ export const EXTERNAL_REDIRECT_HOSTS = ['agentos-sdk.dev', 'discord.gg'];
 // suffix is carried through: `/agent-os/docs` -> `/agentos/docs`. Otherwise
 // the suffix is dropped and every sub-path collapses onto `to`, which is what
 // the old marketing paths need since they have no 1:1 mapping.
+//
 export const wildcardRedirects = [
+	// The old per-entry registry pages are now sections of the Registry's group
+	// pages; every old entry URL lands on the Registry overview.
+	{ from: '/agentos/registry', to: '/agentos/docs/registry' },
 	// Deep TypeDoc URLs are heavily linked from old docs and search results.
 	{ from: '/typedoc', to: '/actors/docs' },
 	{ from: '/learn', to: '/guides' },

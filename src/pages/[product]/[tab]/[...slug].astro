@@ -5,6 +5,8 @@ import DocsArticlePage from '@/components/docs/DocsArticlePage.astro';
 import { getContentParamSlug } from '@/lib/content-path';
 import { products } from '@/sitemap/products';
 import { AI_DOCS_ITEMS } from '@/sitemap/ai';
+import { integrationsFor } from '@/data/integrations';
+import { PRODUCT_INTEGRATIONS_SEGMENT, SITE_INTEGRATIONS_PRODUCT } from '@/sitemap/integrations';
 import { getRouteSeoPolicy, robotsDirective } from '@/lib/routeSeoPolicy';
 
 export async function getStaticPaths() {
@@ -24,8 +26,8 @@ export async function getStaticPaths() {
 			if (tab.id === 'self-host') continue;
 			// Overview is the product's marketing page, not docs content.
 			if (tab.id === 'overview') continue;
-			// A tab that links out (agentOS's Documentation lands on the Sandboxes
-			// docs) owns no pages here; its old routes redirect.
+			// A tab that links out (`docsHome`) owns no pages here; its old routes
+			// redirect.
 			if (!tab.href.startsWith(`/${product.id}/`)) continue;
 			// The glob loader collapses `<dir>/index.mdx` to the directory id, so
 			// the tab's own overview page has the bare tab root as its id.
@@ -55,6 +57,32 @@ export async function getStaticPaths() {
 							: undefined,
 					},
 				});
+			}
+
+			// A non-site product's integrations are authored in its bundle's
+			// `integrations/` section but render inside its docs, at
+			// `/<product>/docs/integrations/...`, under the docs sidebar's fold.
+			const integrationsRoot = `${product.id}/${PRODUCT_INTEGRATIONS_SEGMENT}`;
+			if (tab.id === 'docs' && product.id !== SITE_INTEGRATIONS_PRODUCT && integrationsFor(product.id).length > 0) {
+				for (const entry of entries) {
+					const isRoot = entry.id === integrationsRoot;
+					if (!isRoot && !entry.id.startsWith(`${integrationsRoot}/`)) continue;
+					const rest = isRoot ? '' : getContentParamSlug(entry.id.slice(integrationsRoot.length + 1));
+					const routeSlugOverride = rest
+						? `${PRODUCT_INTEGRATIONS_SEGMENT}/${rest}`
+						: PRODUCT_INTEGRATIONS_SEGMENT;
+					paths.push({
+						params: { product: product.id, tab: tab.id, slug: routeSlugOverride },
+						props: {
+							entry,
+							productId: product.id,
+							tabId: tab.id,
+							productName: product.name,
+							tabTitle: tab.title,
+							routeSlugOverride,
+						},
+					});
+				}
 			}
 
 			// Shared AI documentation stays inside the active product's full docs

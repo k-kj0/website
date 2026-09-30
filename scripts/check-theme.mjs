@@ -188,7 +188,7 @@ try {
     assert.equal(await css(page.locator("#bench-memory .bg-current"), "backgroundColor"),
       mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(27, 25, 22, 0.1)");
 
-    await page.goto("/agentos/registry/");
+    await page.goto("/agentos/docs/registry/");
     const indicators = page.locator('button[aria-label^="Show "]');
     // The carousel is a client island; a click before hydration is ignored.
     await page.waitForFunction(() =>
@@ -200,7 +200,7 @@ try {
     assert.equal(await css(indicators.first().locator("span"), "backgroundColor"),
       mode === "dark" ? "rgba(255, 255, 255, 0.25)" : "rgba(27, 25, 22, 0.25)");
 
-    for (const path of ["/agentos/registry/everything/", "/startups/"]) {
+    for (const path of ["/agentos/docs/registry/software/", "/startups/"]) {
       await page.goto(path);
       for (const panel of await page.locator(".ink-panel").all()) {
         assert.equal(await css(panel, "backgroundColor"), mode === "dark" ? "rgb(22, 22, 24)" : "rgb(27, 25, 22)");

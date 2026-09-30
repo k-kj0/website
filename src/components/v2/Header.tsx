@@ -553,7 +553,7 @@ export function Header({
 	const isLightTheme = variant === "floating" || light;
 
 	// On docs pages the second header row is the docs tab strip, identical on
-	// every docs page. Standalone subsites (agentOS, Secure Exec) keep their own
+	// every docs page. Standalone subsites (Secure Exec) keep their own
 	// product bar instead: the product lockup plus that product's tabs.
 	const standalone =
 		(productId ? getProduct(productId) : undefined) ?? findStandaloneProduct(pathname);
@@ -745,7 +745,7 @@ export function Header({
 					{/* On the main docs pages the second row is the docs tab strip,
 					    which lists the same sections the menu does, so the menu is
 					    dropped rather than repeated one line apart. Standalone
-					    subsites (agentOS, Secure Exec) carry their own product bar
+					    subsites (Secure Exec) carry their own product bar
 					    and keep the menu as the way back into the main docs. */}
 					{(!showProductBar || standalone?.standalone) && (
 						<DocsDropdown active={active === "docs"} lightTheme={isLightTheme} />

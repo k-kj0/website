@@ -94,7 +94,7 @@ export interface DocsMenuLink {
 		| "actors"
 		| "agents"
 		| "workflows"
-		| "sandboxes"
+		| "agentos"
 		| "dynamic-apps"
 		| "integrations";
 	icon?: IconDefinition;
@@ -139,8 +139,8 @@ export const DOCS_MENU: DocsMenuColumn[] = [
 		{
 			label: "Actors",
 			links: [
-				// agentOS and Secure Exec are libraries with their own subsites, so
-				// they stay out of this menu; the footer's Libraries group lists them.
+				// Secure Exec is a library with its own subsite, so it stays out of
+				// this menu; the footer's Libraries group lists it.
 				...ACTOR_TYPES.map((type) => ({
 					label: type.name,
 					href: type.href,

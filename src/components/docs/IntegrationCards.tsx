@@ -1,5 +1,6 @@
 import { integrationGroups, type Integration } from "@/data/integrations";
 import { canonicalizeInternalHref } from "@/lib/internalHref";
+import { integrationsHref } from "@/sitemap/integrations";
 
 function slugify(title: string): string {
 	return title
@@ -33,7 +34,7 @@ export function IntegrationCards({ product }: { product: string }) {
 function IntegrationCard({ product, item }: { product: string; item: Integration }) {
 	return (
 		<a
-			href={canonicalizeInternalHref(`/${product}/integrations/${item.slug}`)}
+			href={canonicalizeInternalHref(integrationsHref(product, item.slug))}
 			className="group flex gap-4 rounded-lg border border-ink/10 bg-white/55 p-4 no-underline transition-colors hover:border-ink/25"
 		>
 			{/* Vendor marks are ink-on-transparent; invert to white on dark. */}

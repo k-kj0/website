@@ -175,7 +175,7 @@ export function ogImageFor(id: string): string {
 
 /**
  * The card for a product vertical's pages, falling back to the docs card for
- * products without one (Agents, Sandboxes, Integrations) and to the site-wide
+ * products without one (Agents, Integrations) and to the site-wide
  * card when no product is set.
  */
 export function productOgImage(productId: string | undefined): string {

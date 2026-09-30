@@ -1,0 +1,248 @@
+---
+// The frame every docs article renders in: the tab's sidebar, the title and
+// description, the Markdown dropdown, the table of contents, and the edit link.
+// `DocsArticlePage` fills it from an MDX entry; pages built from data (the
+// agentOS Registry) fill the slot with their own markup and pass the headings
+// their table of contents lists.
+import DocsLayout from '@/layouts/DocsLayout.astro';
+import { DocsNavigation } from '@/components/DocsNavigation';
+import { DocsTableOfContents } from '@/components/DocsTableOfContents';
+import { DocsPageDropdown } from '@/components/DocsPageDropdown';
+import { Prose } from '@/components/Prose';
+import { Icon, faPencil } from '@rivet-gg/icons';
+import { sitemap } from '@/sitemap/mod';
+import { withAiSidebarSection } from '@/sitemap/ai';
+import { findActiveTab, findPageForHref } from '@/lib/sitemap';
+import { productAccent } from '@/lib/product-accent';
+import { API_DOCS_ROUTE_PREFIX, SITE_DOCS_ROUTE_PREFIX } from '@/sitemap/docs-sources';
+import { jsonLdString } from '@/lib/jsonLd';
+import { ogImageFor, productOgImage } from '@/lib/ogImage';
+import {
+	contextualSeoDescription,
+	contextualSeoTitle,
+	resolveSeoMetadata,
+} from '@/lib/seo';
+
+interface Heading {
+	depth: number;
+	slug: string;
+	text: string;
+}
+
+interface Props {
+	title: string;
+	description?: string;
+	badge?: string;
+	seoTitle?: string;
+	seoDescription?: string;
+	/** Headings of the article body; depth 2 and 3 become the table of contents. */
+	headings: Heading[];
+	/** The section's route, e.g. `/agentos/docs`. */
+	routePrefix: string;
+	/** The page's path under `routePrefix`; empty for the section's own root. */
+	slugPath: string;
+	breadcrumbName?: string;
+	productId?: string;
+	tabId?: string;
+	sectionLabel?: string;
+	seoContextLabel?: string;
+	canonicalUrl?: string;
+	robots?: string;
+	exactTitle?: boolean;
+	ogImage?: string;
+	/** Site path of the page's Markdown mirror, without the `.md`. */
+	markdownPath?: string;
+	editUrl: string;
+	lastModified?: string;
+}
+
+const {
+	title,
+	description,
+	badge,
+	seoTitle,
+	seoDescription,
+	headings,
+	routePrefix,
+	slugPath,
+	breadcrumbName = 'Docs',
+	productId,
+	tabId,
+	sectionLabel,
+	seoContextLabel = sectionLabel ?? 'Documentation',
+	canonicalUrl: canonicalUrlOverride,
+	robots,
+	exactTitle = false,
+	ogImage = productId ? productOgImage(productId) : ogImageFor('docs'),
+	markdownPath: markdownPathOverride,
+	editUrl,
+	lastModified,
+} = Astro.props;
+
+const lastModifiedFormatted = lastModified
+	? new Date(lastModified).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		})
+	: null;
+
+// Build table of contents from headings
+const tableOfContents = headings
+	.filter((h) => h.depth === 2 || h.depth === 3)
+	.reduce((acc, h) => {
+		if (h.depth === 2) {
+			acc.push({ title: h.text, id: h.slug, children: [] });
+		} else if (acc.length > 0) {
+			acc[acc.length - 1].children.push({ title: h.text, id: h.slug, children: [] });
+		}
+		return acc;
+	}, [] as Array<{ title: string; id: string; children: Array<{ title: string; id: string; children: never[] }> }>);
+
+const seo = resolveSeoMetadata({
+	title: seoTitle ?? contextualSeoTitle(title, seoContextLabel),
+	description: contextualSeoDescription(
+		seoDescription ?? description ?? '',
+		`Explore ${title} in ${seoContextLabel} with practical guidance, configuration details, and production-ready examples.`,
+	),
+});
+const fullPath = slugPath ? `${routePrefix}/${slugPath}/` : `${routePrefix}/`;
+const discovered = findActiveTab(fullPath, sitemap);
+// The product-agnostic Overview section owns `/docs/`. Resolve it by route like
+// a product tab, because its AI Tools pages are injected into the sidebar below
+// rather than authored into it, so page lookup alone cannot find their tab.
+const isSiteDocsSection = routePrefix === SITE_DOCS_ROUTE_PREFIX;
+// The API reference is resolved by route for the same reason: the Overview
+// sidebar links into it, so a page lookup alone could hand it to Overview.
+const isApiDocsSection = routePrefix === API_DOCS_ROUTE_PREFIX;
+const routeOwnedTab = productId && tabId
+	? sitemap.find((tab) => tab.href.replace(/\/$/, '') === `/${productId}/${tabId}`)
+	: isSiteDocsSection || isApiDocsSection
+		? sitemap.find((tab) => tab.href.replace(/\/$/, '') === routePrefix)
+		: undefined;
+const activeTab = routeOwnedTab ?? discovered?.tab;
+const sourceSidebar = activeTab?.sidebar ?? [];
+// Every Documentation sidebar carries the site-wide AI Tools group: the
+// canonical pages under `/docs/`, and a contextual alias inside each product.
+// Guides, Deploy, and Integrations do not.
+const sidebar = tabId === 'docs' || isSiteDocsSection
+	? withAiSidebarSection(sourceSidebar, productId)
+	: sourceSidebar;
+const activePage = activeTab
+	? findPageForHref(fullPath, { ...activeTab, sidebar })
+	: discovered?.page;
+const parentPageCandidate = activePage?.parent;
+// A section's overview page sits inside a sidebar section of the same name, so
+// the eyebrow would just repeat the h1 ("Control Plane" over "Control Plane").
+const parentPage =
+	parentPageCandidate && 'title' in parentPageCandidate && parentPageCandidate.title === title
+		? undefined
+		: parentPageCandidate;
+const hasSidebar = sidebar.length > 0;
+const canonicalUrl = canonicalUrlOverride ?? `https://rivet.dev${fullPath}`;
+
+// Inside a product vertical, prose links carry that product's accent instead of
+// pine. Set as a CSS variable rather than a class because the typography plugin
+// reads the link color from `--tw-prose-links`, and because the hue is data.
+const accent = productAccent(productId);
+const proseStyle = accent ? { '--tw-prose-links': `color-mix(in srgb, ${accent.hex}, white var(--site-product-lighten, 0%))` } : undefined;
+
+// The Markdown mirror written by `pnpm gen:markdown` sits at the page's own
+// site path plus `.md`, so the dropdown's link is just this route unslashed.
+const markdownPath = markdownPathOverride ?? fullPath.replace(/^\/|\/$/g, '');
+
+// Build BreadcrumbList schema
+const breadcrumbItems = [
+	{ name: "Home", url: "https://rivet.dev/" },
+	{ name: breadcrumbName, url: `https://rivet.dev${routePrefix}/` },
+];
+if (parentPage) {
+	breadcrumbItems.push({ name: parentPage.title, url: `https://rivet.dev${parentPage.href || `${routePrefix}/`}` });
+}
+if (slugPath) {
+	breadcrumbItems.push({ name: title, url: canonicalUrl });
+}
+
+const breadcrumbSchema = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": breadcrumbItems.map((item, index) => ({
+		"@type": "ListItem",
+		"position": index + 1,
+		"name": item.name,
+		"item": item.url
+	}))
+};
+---
+
+<DocsLayout
+	title={seo.title}
+	description={seo.description}
+	canonicalUrl={canonicalUrl}
+	robots={robots}
+	ogImage={ogImage}
+	sidebar={sidebar}
+	productId={productId}
+	tabId={tabId}
+	sectionLabel={sectionLabel}
+	exactTitle={exactTitle}
+>
+	<script type="application/ld+json" set:html={jsonLdString(breadcrumbSchema)} />
+	{hasSidebar && (
+		<aside class="hidden md:block border-r border-ink/10">
+			<DocsNavigation sidebar={sidebar} tabKey={activeTab?.title ?? 'Documentation'} currentPath={fullPath} productId={productId} client:load transition:persist="docs-sidebar" />
+		</aside>
+	)}
+	<div class="flex justify-center w-full min-w-0">
+		<div class="flex gap-8 w-full min-w-0 max-w-[86rem]">
+			<main id="main-content" tabindex="-1" class="w-full px-8 lg:mx-0 mx-auto lg:max-w-none min-w-0 py-8 max-w-prose-docs">
+						<div class="relative flex justify-end">
+							<div class:list={["flex items-end", !badge && `md:absolute md:right-0 ${parentPage ? 'md:top-5' : 'md:top-0'}`]}>
+								<DocsPageDropdown
+									title={title || 'Documentation'}
+									markdownPath={markdownPath}
+									currentUrl={fullPath}
+									client:load
+								/>
+							</div>
+						</div>
+						<Prose as="article" surface="paper" style={proseStyle} className="docs-article max-w-prose-docs lg:max-w-prose-docs mx-auto prose-headings:font-medium [&>h1:first-of-type]:pr-44">
+							{parentPage && (
+								<div class:list={["eyebrow h-5 text-sm font-semibold", accent?.text ?? "text-pine"]}>
+									{parentPage.title}
+								</div>
+							)}
+							<h1 class:list={[badge && "!pr-0 flex flex-wrap items-center gap-x-3 gap-y-2"]}>
+								<span>{title}</span>
+								{badge && (
+									<span class="inline-flex shrink-0 items-center rounded-md border border-pine/20 bg-pine/5 px-2.5 py-1 text-sm font-medium leading-5 tracking-normal text-pine whitespace-nowrap">{badge}</span>
+								)}
+							</h1>
+							{description && <p>{description}</p>}
+							<slot />
+						</Prose>
+						<div class="border-t border-ink/10 mt-12 pt-6 flex flex-wrap items-center justify-between gap-4">
+							<a
+								href={editUrl}
+								target="_blank"
+								rel="noreferrer"
+								class="inline-flex items-center gap-2 rounded-md border border-ink/15 bg-white/55 px-3 py-2 text-sm text-ink transition-colors hover:border-ink/30"
+							>
+								<Icon icon={faPencil} className="text-ink-faint" />
+								Edit this page
+							</a>
+							{lastModifiedFormatted && (
+								<span class="text-xs text-ink-faint">
+									Last updated {lastModifiedFormatted}
+								</span>
+							)}
+						</div>
+			</main>
+			{tableOfContents.length > 0 && (
+				<aside class="hidden xl:block w-64 min-w-0 flex-shrink-0 pb-4">
+					<DocsTableOfContents className="lg:max-h-content" tableOfContents={tableOfContents} productId={productId} client:load />
+				</aside>
+			)}
+		</div>
+	</div>
+</DocsLayout>
