@@ -10,7 +10,7 @@ description: "Why the agent harness shouldn't run inside the sandbox, and how to
 
 There's been a running debate since the beginning of 2026 about where you run agents: **inside the sandbox, or outside of it**. There have been a lot of implementations of both, but the industry is moving toward **running agents outside of sandboxes for mature projects**.
 
-Within the last few months, [OpenAI](https://developers.openai.com/api/docs/guides/agents/sandboxes), [Anthropic](https://claude.com/blog/claude-managed-agents-updates), [Vercel](https://vercel.com/eve), [Cloudflare](https://blog.cloudflare.com/agents-platform-flue-sdk/), and [Amp](https://ampcode.com/news/agents-in-orbs) all shipped platforms that run the agent loop outside the sandbox.
+Within the last few months, [OpenAI](https://developers.openai.com/api/docs/guides/agents/sandboxes), [Anthropic](https://claude.com/blog/claude-managed-agents-updates), [Vercel](https://vercel.com/eve), [Cloudflare](https://blog.cloudflare.com/agents-platform-flue-sdk/), and [Amp](https://ampcode.com/news/agents-in-orbs) all shipped platforms that run the agent loop outside the sandbox. Rivet provides an [official library](/changelog/2026-10-01-introducing-pi-1-0-for-rivet/) for running [Pi](https://pi.dev) this way.
 
 ## Running Agents Inside Sandboxes: Easy to Set Up, Hard to Operate
 
@@ -45,6 +45,8 @@ When the sandbox breaks, it takes these down with it:
 - **Session history**: The session history gets corrupted or wiped along with everything else when stored inside the sandbox. Keep it outside, in a real database.
 - **Observability of failures**: If the sandbox dies, it will not be able to report its own failure to observability. Ship detected failures from within your own backend.
 
+[Pi on Rivet](/agents/docs/pi/) keeps all three outside the sandbox: the agent loop runs in a Rivet Actor, the session is saved to the Actor's SQLite database, and every run is [traced with OpenTelemetry](/agents/docs/observability) from your backend.
+
 ### Reason 2: The Trust Boundary
 
 ![A sandbox with an open padlock inside it](https://assets.rivet.dev/website/blog/2026-07-27-run-your-harness-outside-the-sandbox/sandbox-unlock.png?v=1)
@@ -60,6 +62,8 @@ You can do none of these safely in a sandbox:
 - **Trusted tools**: Tools that talk to private databases or internal APIs need credentials the sandbox can't be trusted with. Provide them as tools in the harness, no custom authentication proxies required.
 - **Agent-to-agent communication**: Sandbox-to-sandbox communication means every sandbox must hold addresses and credentials for its siblings, which is complicated, error prone, and insecure. Route agent-agent communication in your backend instead where you don't need complex authentication and routing mechanisms.
 
+[Pi on Rivet](/agents/docs/pi/) enforces these in your backend: [custom tools](/agents/docs/custom-tools) call your APIs with secrets the sandbox never sees, [human in the loop](/agents/docs/human-in-the-loop) makes a tool wait for approval, [agent-to-agent messages](/agents/docs/agent-to-agent) route through your backend, [scoped access](/agents/docs/scoped-access) shares results through links that reach one Actor, and [user subscriptions](/agents/docs/user-subscriptions) let users bring their own Claude or ChatGPT plan.
+
 ### Reason 3: The Sandbox Isn't Always Running
 
 ![A sleeping sandbox](https://assets.rivet.dev/website/blog/2026-07-27-run-your-harness-outside-the-sandbox/sandbox-snooze.png?v=1)
@@ -72,6 +76,8 @@ Here's what stops working while the sandbox is asleep:
 - **Workflows ("graphs")**: A durable multi-step workflow retries failures and may sleep for hours. Something has to exist outside the sandbox to resume it.
 - **Loading sessions quickly**: Reading a session shouldn't require waking a sandbox, because starting one can take a long time. Store the history in an external database and reads are instant.
 - **Indexing sessions**: Searching across sessions means reading every transcript, and you can't wake a fleet of sandboxes to build an index. With history outside, indexing is just a database job.
+
+With [Pi on Rivet](/agents/docs/pi/), the Actor wakes itself on [schedules](/agents/docs/schedules), runs as a step in [workflows](/agents/docs/workflows), and serves session history from its own SQLite database while the sandbox stays paused.
 
 ## The Architecture: Expose the Sandbox as Tools
 
@@ -402,10 +408,34 @@ registry.start();
 
 The full runnable example is [on GitHub](https://github.com/rivet-dev/rivet/tree/main/website/src/content/posts/2026-07-27-run-your-harness-outside-the-sandbox/example-agent-actor).
 
+## Skip the Boilerplate: Run Pi on Rivet
+
+The Actor above is the do-it-yourself version: you reattach the sandbox, define the tools, store the history in SQLite, and process the queue yourself. If you'd rather use an existing harness, Rivet's official [Pi library](/agents/docs/pi/) does all of that for [Pi](https://pi.dev):
+
+```ts server.ts
+import { pi } from "@rivet-dev/pi";
+import { e2bProvider } from "@rivet-dev/sandbox-adapter/e2b";
+import { setup } from "rivetkit";
+
+const agent = pi({
+	model: "anthropic/claude-opus-5-5",
+	sandbox: e2bProvider({ template: "base" }),
+});
+
+export const registry = setup({ use: { agent } });
+
+registry.start();
+```
+
+It runs the official Pi package, not a fork or wrapper. Each key gets its own Actor, Pi session, and sandbox. Pi's session tree, compaction, and retries are saved to the Actor's SQLite database, every Pi event streams to connected clients, and any client can [`steer` or `abort`](/agents/docs/session-lifecycle) a run in progress. Swap `e2bProvider` for agentOS, Daytona, or [your own provider](/agents/docs/sandboxes).
+
+See the [quickstart](/agents/docs/quickstart) to deploy it.
+
 ## Frameworks That Run the Harness Outside the Sandbox
 
 This architecture is already well proven, despite being poorly communicated across the industry. There are a lot of options that run the harness outside of the sandbox for you:
 
+- **Pi on Rivet (official Pi)**: [`@rivet-dev/pi`](/agents/docs/pi/) runs the official, unmodified [Pi](https://pi.dev) package in a Rivet Actor, with Pi's file and shell tools running in agentOS, E2B, Daytona, or your own sandbox. See the [documentation](/agents/docs/pi/).
 - **Rivet Actors (bring your own harness)**: [Rivet Actors](https://rivet.dev/docs/actors) are the most flexible option for bringing your own harness with sandboxes, because it's a generic primitive, and it's open-source and self-hostable. See the [documentation](https://rivet.dev/docs/actors) and [GitHub](https://github.com/rivet-dev/rivet).
 - **agentOS (existing harnesses)**: [agentOS](https://agentos-sdk.dev) is built on top of Rivet Actors, and it provides support for this architecture with mainstream harnesses like Claude Code, Codex, OpenCode, and Pi. It also lets you provide your own custom agent, and supports talking to sandboxes using [sandbox mounting](https://agentos-sdk.dev/docs/sandbox). See the [documentation](https://agentos-sdk.dev/docs) and [GitHub](https://github.com/rivet-dev/agentos).
 - **Vercel's Eve (custom harness)**: [Eve](https://vercel.com/eve) provides the agent-outside-the-sandbox architecture with Vercel-native primitives.
@@ -417,8 +447,9 @@ This architecture is already well proven, despite being poorly communicated acro
 ## Frequently Asked Questions
 
 - **Is it insecure to run the harness outside the sandbox?** No. The tools are effectively API calls into a sandbox. Nothing lets the agent run code or touch files on the machine running the harness.
-- **How do I run Claude Code, Codex, or OpenCode like this?** They don't support this architecture natively, but [agentOS](https://agentos-sdk.dev) provides a runtime that enables these harnesses to operate this way. [Pi](https://pi.dev) supports it directly: you can [swap out its coding tools](https://pi.dev/docs/latest/extensions) for tools bound to your sandbox, like the Vercel AI SDK example above.
-- **Isn't this more expensive than just the sandbox?** No. An actor is a few megabytes of RAM, and a lot of the time it's the only thing running instead of the full sandbox. For example, reading or sharing a thread doesn't need to boot the full sandbox.
+- **How do I run Pi like this?** Use Rivet's official [Pi library](/agents/docs/pi/). It runs vanilla Pi in a Rivet Actor and sends Pi's file and shell tools to your sandbox.
+- **How do I run Claude Code, Codex, or OpenCode like this?** They don't support this architecture natively, but [agentOS](https://agentos-sdk.dev) provides a runtime that enables these harnesses to operate this way.
+- **Isn't this more expensive than just the sandbox?** No. An actor is a few megabytes of RAM (a Pi session on Rivet measures [0.82 MB](https://github.com/rivet-dev/rivet/tree/037206e5266c12fda62e7ebe53c7a1a11101d41b/integrations/pi/benchmarks/session-memory)), and a lot of the time it's the only thing running instead of the full sandbox. For example, reading or sharing a thread doesn't need to boot the full sandbox.
 - **What's the latency of running the agent outside the sandbox vs inside?** Negligible. Roughly 10 milliseconds extra per tool call in the same datacenter, compared to 50 to 200 milliseconds for a typical API request from your browser.
 
 ## Get Started
@@ -426,5 +457,8 @@ This architecture is already well proven, despite being poorly communicated acro
 Everything in this post runs on [Rivet Actors](https://rivet.dev/docs/actors), which is open-source and self-hostable. Come join our Discord, drop a reply, or shoot me a DM if you have questions. Happy to chat.
 
 - **Documentation**: [rivet.dev/docs/actors](https://rivet.dev/docs/actors)
+- **Pi on Rivet**: [quickstart](/agents/docs/quickstart) and [documentation](/agents/docs/pi/)
 - **GitHub**: [github.com/rivet-dev/rivet](https://github.com/rivet-dev/rivet)
 - **Discord**: [rivet.dev/discord](https://rivet.dev/discord)
+
+_Updated October 2, 2026: Added [Pi on Rivet](#skip-the-boilerplate-run-pi-on-rivet), with mentions in the frameworks list, reasons, FAQ, and Get Started links._
