@@ -51,7 +51,7 @@ Connect your GitHub repository to Vercel and push. Vercel builds and deploys.
 
 <Step title="Register the URL">
 
-Set your deployment URL with the `/api/rivet` path as the serverless runner URL in the dashboard, for example `https://my-app.vercel.app/api/rivet`.
+Set your deployment URL with the `/api/rivet` path as the serverless runner URL in the dashboard, for example `https://my-app.vercel.app/api/rivet`. In the dashboard, open **Settings → Providers**, add (or edit) the provider named `default`, paste the URL, and select at least one datacenter.
 
 </Step>
 
@@ -104,13 +104,22 @@ jobs:
 ## Troubleshooting
 
 <AccordionGroup>
-<Accordion title="ENOENT: no such file or directory (rivetkit state)">
+<Accordion title="ENOENT: no such file or directory">
 
-```
+```text
 Error: ENOENT: no such file or directory, mkdir '.../rivetkit/.../state'
 ```
 
 `RIVET_ENDPOINT` is not set, so the SDK fell back to the file system driver, which cannot write in Vercel's read-only environment. Set the variable. The [preview-namespace-action](https://github.com/rivet-dev/preview-namespace-action) configures it automatically.
+
+</Accordion>
+<Accordion title="No runner config with name 'default'">
+
+```text
+RivetError: No runner config with name 'default' are available in any datacenter for the namespace '...'
+```
+
+Rivet has no provider named `default` for the namespace yet. In the dashboard, open **Settings → Providers** and check that a provider named `default` is listed. If not, add one with your deployment URL (see Register the URL).
 
 </Accordion>
 <Accordion title="Metadata endpoint missing clientEndpoint">
